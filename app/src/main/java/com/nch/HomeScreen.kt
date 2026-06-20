@@ -1,5 +1,6 @@
 package com.nch
 
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -8,6 +9,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -15,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -81,82 +86,166 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.Top
         ) {
             ExpenseCard(
-                title = "gastos personales",
-                amount = "$10.000"
+                title = "gastos del mes",
+                amount = "$100.000"
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Lista de transacciones sugerida por la imagen
+            // Lista de transacciones con los nuevos controles
             TransactionItem("Alquiler", "$45.000")
             TransactionItem("Supermercado", "$12.500")
             TransactionItem("Servicios", "$8.000")
             TransactionItem("Transporte", "$5.200")
             TransactionItem("Gimnasio", "$3.500")
             
-            Spacer(modifier = Modifier.height(100.dp)) // Espacio para que el bottom bar no tape el contenido
+            Spacer(modifier = Modifier.height(100.dp))
         }
     }
 }
 
 @Composable
 fun ExpenseCard(title: String, amount: String) {
-    Box(
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(28.dp))
-            .background(Color(0xFF111111))
-            .padding(24.dp)
+            .padding(vertical = 8.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1E1E1E)
+        )
     ) {
-        Column {
-            Text(
-                text = title,
-                color = Color.Gray,
-                fontSize = 14.sp,
-                fontWeight = FontWeight.Medium,
-                letterSpacing = 0.5.sp
-            )
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 32.dp, horizontal = 16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Icon(
+                    imageVector = Icons.Default.AutoAwesome,
+                    contentDescription = null,
+                    tint = Color.Gray,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = title.uppercase(),
+                    color = Color.Gray,
+                    fontSize = 12.sp,
+                    fontWeight = FontWeight.Bold,
+                    letterSpacing = 1.sp
+                )
+            }
+            
             Spacer(modifier = Modifier.height(8.dp))
+            
             Text(
                 text = amount,
                 color = Color.White,
-                fontSize = 32.sp,
+                fontSize = 42.sp,
                 fontWeight = FontWeight.Bold
             )
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            Box(
+                modifier = Modifier
+                    .width(80.dp)
+                    .height(3.dp)
+                    .clip(CircleShape)
+                    .background(Color(0xFF444444))
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth(0.6f)
+                        .fillMaxHeight()
+                        .background(Color.White)
+                )
+            }
         }
     }
 }
 
 @Composable
 fun TransactionItem(category: String, amount: String) {
+    var isDone by remember { mutableStateOf(false) }
+    
+    // Animación suave para el cambio de color
+    val backgroundColor by animateColorAsState(
+        targetValue = if (isDone) Color(0xFF0A0A0A) else Color(0xFF1A1A1A),
+        label = "backgroundColor"
+    )
+    
+    val contentAlpha = if (isDone) 0.3f else 1.0f
+
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 4.dp),
+            .padding(vertical = 4.dp)
+            .alpha(contentAlpha),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1A1A1A)
+            containerColor = backgroundColor
         )
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 20.dp, vertical = 20.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = category,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.Medium
-            )
-            Text(
-                text = amount,
-                color = Color.White,
-                fontSize = 16.sp,
-                fontWeight = FontWeight.SemiBold
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = category,
+                    color = Color.White,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+                Text(
+                    text = amount,
+                    color = Color.White,
+                    fontSize = 14.sp,
+                    fontWeight = FontWeight.Normal
+                )
+            }
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                // Botón Descartar (X)
+                IconButton(
+                    onClick = { /* TODO: Lógica para eliminar en el futuro */ },
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Descartar",
+                        tint = Color.DarkGray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+                
+                Spacer(modifier = Modifier.width(4.dp))
+                
+                // Botón OK (Check)
+                IconButton(
+                    onClick = { isDone = !isDone },
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape)
+                        .background(if (isDone) Color.White else Color(0xFF222222))
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Check,
+                        contentDescription = "Completar",
+                        tint = if (isDone) Color.Black else Color.White,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
         }
     }
 }
