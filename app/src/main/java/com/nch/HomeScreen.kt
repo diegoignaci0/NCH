@@ -3,8 +3,10 @@ package com.nch
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Menu
@@ -72,11 +74,89 @@ fun HomeScreen() {
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color.Black),
+                .background(Color.Black)
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 24.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Top
         ) {
-            // Main content area remains black as per the image
+            ExpenseCard(
+                title = "gastos personales",
+                amount = "$10.000"
+            )
+            
+            Spacer(modifier = Modifier.height(32.dp))
+            
+            // Lista de transacciones sugerida por la imagen
+            TransactionItem("Alquiler", "$45.000")
+            TransactionItem("Supermercado", "$12.500")
+            TransactionItem("Servicios", "$8.000")
+            TransactionItem("Transporte", "$5.200")
+            TransactionItem("Gimnasio", "$3.500")
+            
+            Spacer(modifier = Modifier.height(100.dp)) // Espacio para que el bottom bar no tape el contenido
+        }
+    }
+}
+
+@Composable
+fun ExpenseCard(title: String, amount: String) {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(Color(0xFF111111))
+            .padding(24.dp)
+    ) {
+        Column {
+            Text(
+                text = title,
+                color = Color.Gray,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Medium,
+                letterSpacing = 0.5.sp
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Text(
+                text = amount,
+                color = Color.White,
+                fontSize = 32.sp,
+                fontWeight = FontWeight.Bold
+            )
+        }
+    }
+}
+
+@Composable
+fun TransactionItem(category: String, amount: String) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFF1A1A1A)
+        )
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 20.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = category,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.Medium
+            )
+            Text(
+                text = amount,
+                color = Color.White,
+                fontSize = 16.sp,
+                fontWeight = FontWeight.SemiBold
+            )
         }
     }
 }
