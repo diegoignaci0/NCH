@@ -9,7 +9,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.AutoAwesome
+import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FitnessCenter
@@ -17,6 +19,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -28,10 +31,29 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nch.ui.theme.NchTheme
+import java.util.UUID
+
+data class Transaction(
+    val id: String = UUID.randomUUID().toString(),
+    val category: String,
+    val amount: String,
+    var isDone: Boolean = false
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
+    // Estado para la lista de transacciones
+    val transactions = remember {
+        mutableStateListOf(
+            Transaction(category = "Alquiler", amount = "$45.000"),
+            Transaction(category = "Supermercado", amount = "$12.500"),
+            Transaction(category = "Servicios", amount = "$8.000"),
+            Transaction(category = "Transporte", amount = "$5.200"),
+            Transaction(category = "Gimnasio", amount = "$3.500")
+        )
+    }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -86,20 +108,64 @@ fun HomeScreen() {
             verticalArrangement = Arrangement.Top
         ) {
             ExpenseCard(
-                title = "gastos del mes",
+                title = "meta 2026",
                 amount = "$100.000"
             )
             
             Spacer(modifier = Modifier.height(32.dp))
             
-            // Lista de transacciones con los nuevos controles
-            TransactionItem("Alquiler", "$45.000")
-            TransactionItem("Supermercado", "$12.500")
-            TransactionItem("Servicios", "$8.000")
-            TransactionItem("Transporte", "$5.200")
-            TransactionItem("Gimnasio", "$3.500")
+            // Renderizado dinámico de la lista
+            transactions.forEach { transaction ->
+                TransactionItem(
+                    transaction = transaction,
+                    onDelete = { transactions.remove(transaction) }
+                )
+            }
             
-            Spacer(modifier = Modifier.height(100.dp))
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Botón para agregar nueva card
+            Button(
+                onClick = { 
+                    // Por ahora agregamos un gasto genérico, luego puedes abrir un diálogo
+                    transactions.add(Transaction(category = "Nuevo Gasto", amount = "$0"))
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1E1E1E),
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Añadir Gasto", fontWeight = FontWeight.Bold)
+            }
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Botón para Resumen Finanzas
+            Button(
+                onClick = { 
+                    /* TODO: Navegación a Resumen Finanzas */ 
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1E1E1E),
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(Icons.Default.BarChart, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Resumen Finanzas", fontWeight = FontWeight.Bold)
+            }
+            
+            Spacer(modifier = Modifier.height(120.dp))
         }
     }
 }
@@ -171,10 +237,9 @@ fun ExpenseCard(title: String, amount: String) {
 }
 
 @Composable
-fun TransactionItem(category: String, amount: String) {
-    var isDone by remember { mutableStateOf(false) }
+fun TransactionItem(transaction: Transaction, onDelete: () -> Unit) {
+    var isDone by remember { mutableStateOf(transaction.isDone) }
     
-    // Animación suave para el cambio de color
     val backgroundColor by animateColorAsState(
         targetValue = if (isDone) Color(0xFF0A0A0A) else Color(0xFF1A1A1A),
         label = "backgroundColor"
@@ -201,13 +266,13 @@ fun TransactionItem(category: String, amount: String) {
         ) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = category,
+                    text = transaction.category,
                     color = Color.White,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium
                 )
                 Text(
-                    text = amount,
+                    text = transaction.amount,
                     color = Color.White,
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Normal
@@ -215,14 +280,13 @@ fun TransactionItem(category: String, amount: String) {
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
-                // Botón Descartar (X)
                 IconButton(
-                    onClick = { /* TODO: Lógica para eliminar en el futuro */ },
+                    onClick = onDelete,
                     modifier = Modifier.size(36.dp)
                 ) {
                     Icon(
                         imageVector = Icons.Default.Close,
-                        contentDescription = "Descartar",
+                        contentDescription = "Eliminar",
                         tint = Color.DarkGray,
                         modifier = Modifier.size(18.dp)
                     )
@@ -230,9 +294,11 @@ fun TransactionItem(category: String, amount: String) {
                 
                 Spacer(modifier = Modifier.width(4.dp))
                 
-                // Botón OK (Check)
                 IconButton(
-                    onClick = { isDone = !isDone },
+                    onClick = { 
+                        isDone = !isDone
+                        transaction.isDone = isDone
+                    },
                     modifier = Modifier
                         .size(36.dp)
                         .clip(CircleShape)
