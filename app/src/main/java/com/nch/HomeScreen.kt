@@ -31,6 +31,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.nch.ui.theme.NchTheme
+import java.text.NumberFormat
+import java.util.Locale
 import java.util.UUID
 
 data class Transaction(
@@ -40,17 +42,106 @@ data class Transaction(
     var isDone: Boolean = false
 )
 
+fun formatCLP(amount: String): String {
+    val cleanString = amount.replace(Regex("[^\\d]"), "")
+    val parsed = cleanString.toLongOrNull() ?: 0L
+    val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+    return "$${formatter.format(parsed)}"
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen() {
     // Estado para la lista de transacciones
     val transactions = remember {
-        mutableStateListOf(
-            Transaction(category = "Alquiler", amount = "$45.000"),
-            Transaction(category = "Supermercado", amount = "$12.500"),
-            Transaction(category = "Servicios", amount = "$8.000"),
-            Transaction(category = "Transporte", amount = "$5.200"),
-            Transaction(category = "Gimnasio", amount = "$3.500")
+        mutableStateListOf<Transaction>()
+    }
+
+    // Estado para el diálogo
+    var showDialog by remember { mutableStateOf(false) }
+    var categoryInput by remember { mutableStateOf("") }
+    var amountInput by remember { mutableStateOf("") }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = { showDialog = false },
+            containerColor = Color(0xFF1A1A1A),
+            title = { 
+                Text(
+                    "Nuevo Gasto", 
+                    color = Color.White, 
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                ) 
+            },
+            text = {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = categoryInput,
+                        onValueChange = { categoryInput = it },
+                        label = { Text("Nombre del gasto") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.Gray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = amountInput,
+                        onValueChange = { input ->
+                            // Formateo en tiempo real con puntos
+                            val clean = input.replace(Regex("[^\\d]"), "")
+                            if (clean.isEmpty()) {
+                                amountInput = ""
+                            } else {
+                                val parsed = clean.toLongOrNull() ?: 0L
+                                val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+                                amountInput = formatter.format(parsed)
+                            }
+                        },
+                        label = { Text("Monto") },
+                        prefix = { Text("$", color = Color.White) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.Gray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (categoryInput.isNotBlank() && amountInput.isNotBlank()) {
+                            // Ya viene formateado con puntos desde el input
+                            transactions.add(Transaction(category = categoryInput, amount = "$$amountInput"))
+                            categoryInput = ""
+                            amountInput = ""
+                            showDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                    shape = RoundedCornerShape(100.dp)
+                ) {
+                    Text("Añadir", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDialog = false }) {
+                    Text("Cancelar", color = Color.Gray)
+                }
+            }
         )
     }
 
@@ -107,9 +198,31 @@ fun HomeScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Top
         ) {
-            ExpenseCard(
+            // Card Principal
+            SummaryCard(
                 title = "meta 2026",
-                amount = "$100.000"
+                amount = "$100.000",
+                containerColor = Color(0xFF1E1E1E)
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Card Ingresos (Verde)
+            SummaryCard(
+                title = "ingresos extras de sueldo",
+                amount = "$0",
+                containerColor = Color(0xFF1B5E20), // Verde oscuro
+                isSmall = true
+            )
+            
+            Spacer(modifier = Modifier.height(12.dp))
+            
+            // Card Gastos Extras (Rojo)
+            SummaryCard(
+                title = "gastos extras",
+                amount = "$0",
+                containerColor = Color(0xFFB71C1C), // Rojo oscuro
+                isSmall = true
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -126,10 +239,7 @@ fun HomeScreen() {
             
             // Botón para agregar nueva card
             Button(
-                onClick = { 
-                    // Por ahora agregamos un gasto genérico, luego puedes abrir un diálogo
-                    transactions.add(Transaction(category = "Nuevo Gasto", amount = "$0"))
-                },
+                onClick = { showDialog = true },
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -171,20 +281,25 @@ fun HomeScreen() {
 }
 
 @Composable
-fun ExpenseCard(title: String, amount: String) {
+fun SummaryCard(
+    title: String,
+    amount: String,
+    containerColor: Color,
+    isSmall: Boolean = false
+) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 4.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFF1E1E1E)
+            containerColor = containerColor
         )
     ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 32.dp, horizontal = 16.dp),
+                .padding(vertical = if (isSmall) 20.dp else 32.dp, horizontal = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Row(
@@ -194,43 +309,44 @@ fun ExpenseCard(title: String, amount: String) {
                 Icon(
                     imageVector = Icons.Default.AutoAwesome,
                     contentDescription = null,
-                    tint = Color.Gray,
-                    modifier = Modifier.size(16.dp)
+                    tint = if (containerColor == Color(0xFF1E1E1E)) Color.Gray else Color.White.copy(alpha = 0.7f),
+                    modifier = Modifier.size(if (isSmall) 12.dp else 16.dp)
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
                     text = title.uppercase(),
-                    color = Color.Gray,
-                    fontSize = 12.sp,
+                    color = if (containerColor == Color(0xFF1E1E1E)) Color.Gray else Color.White.copy(alpha = 0.7f),
+                    fontSize = if (isSmall) 10.sp else 12.sp,
                     fontWeight = FontWeight.Bold,
                     letterSpacing = 1.sp
                 )
             }
             
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(if (isSmall) 4.dp else 8.dp))
             
             Text(
                 text = amount,
                 color = Color.White,
-                fontSize = 42.sp,
+                fontSize = if (isSmall) 28.sp else 42.sp,
                 fontWeight = FontWeight.Bold
             )
             
-            Spacer(modifier = Modifier.height(16.dp))
-            
-            Box(
-                modifier = Modifier
-                    .width(80.dp)
-                    .height(3.dp)
-                    .clip(CircleShape)
-                    .background(Color(0xFF444444))
-            ) {
+            if (!isSmall) {
+                Spacer(modifier = Modifier.height(16.dp))
                 Box(
                     modifier = Modifier
-                        .fillMaxWidth(0.6f)
-                        .fillMaxHeight()
-                        .background(Color.White)
-                )
+                        .width(80.dp)
+                        .height(3.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFF444444))
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth(0.6f)
+                            .fillMaxHeight()
+                            .background(Color.White)
+                    )
+                }
             }
         }
     }
