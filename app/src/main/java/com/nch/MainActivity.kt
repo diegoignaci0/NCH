@@ -24,7 +24,11 @@ fun MainApp() {
     var currentScreen by remember { mutableStateOf("home") }
 
     when (currentScreen) {
-        "home" -> HomeScreen(onNavigateToSummary = { currentScreen = "summary" })
+        "home" -> HomeScreen(
+            onNavigateToSummary = { currentScreen = "summary" },
+            onNavigateToSavings = { currentScreen = "savings" }
+        )
         "summary" -> FinanceSummaryScreen(onBack = { currentScreen = "home" })
+        "savings" -> MonthlySavingsScreen(onBack = { currentScreen = "home" })
     }
 }

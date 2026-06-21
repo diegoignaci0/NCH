@@ -14,6 +14,7 @@ import androidx.compose.material.icons.filled.AutoAwesome
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
@@ -51,7 +52,7 @@ fun formatCLP(amount: String): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(onNavigateToSummary: () -> Unit) {
+fun HomeScreen(onNavigateToSummary: () -> Unit, onNavigateToSavings: () -> Unit) {
     // Estado para la lista de transacciones
     val transactions = remember {
         mutableStateListOf<Transaction>()
@@ -61,6 +62,97 @@ fun HomeScreen(onNavigateToSummary: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     var categoryInput by remember { mutableStateOf("") }
     var amountInput by remember { mutableStateOf("") }
+
+    // Estado para el diálogo de edición
+    var showEditDialog by remember { mutableStateOf(false) }
+    var editingTransaction by remember { mutableStateOf<Transaction?>(null) }
+    var editCategoryInput by remember { mutableStateOf("") }
+    var editAmountInput by remember { mutableStateOf("") }
+
+    if (showEditDialog && editingTransaction != null) {
+        AlertDialog(
+            onDismissRequest = { showEditDialog = false },
+            containerColor = Color(0xFF1A1A1A),
+            title = { 
+                Text(
+                    "Editar Gasto", 
+                    color = Color.White, 
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 20.sp
+                ) 
+            },
+            text = {
+                Column(modifier = Modifier.padding(top = 8.dp)) {
+                    OutlinedTextField(
+                        value = editCategoryInput,
+                        onValueChange = { editCategoryInput = it },
+                        label = { Text("Nombre del gasto") },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.Gray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = editAmountInput,
+                        onValueChange = { input ->
+                            val clean = input.replace(Regex("[^\\d]"), "")
+                            if (clean.isEmpty()) {
+                                editAmountInput = ""
+                            } else {
+                                val parsed = clean.toLongOrNull() ?: 0L
+                                val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+                                editAmountInput = formatter.format(parsed)
+                            }
+                        },
+                        label = { Text("Monto") },
+                        prefix = { Text("$", color = Color.White) },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color.White,
+                            unfocusedBorderColor = Color.DarkGray,
+                            focusedLabelColor = Color.White,
+                            unfocusedLabelColor = Color.Gray,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        )
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (editCategoryInput.isNotBlank() && editAmountInput.isNotBlank()) {
+                            val index = transactions.indexOf(editingTransaction)
+                            if (index != -1) {
+                                transactions[index] = editingTransaction!!.copy(
+                                    category = editCategoryInput,
+                                    amount = "$$editAmountInput"
+                                )
+                            }
+                            showEditDialog = false
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black),
+                    shape = RoundedCornerShape(100.dp)
+                ) {
+                    Text("Guardar", fontWeight = FontWeight.Bold)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showEditDialog = false }) {
+                    Text("Cancelar", color = Color.Gray)
+                }
+            }
+        )
+    }
 
     if (showDialog) {
         AlertDialog(
@@ -212,7 +304,18 @@ fun HomeScreen(onNavigateToSummary: () -> Unit) {
             transactions.forEach { transaction ->
                 TransactionItem(
                     transaction = transaction,
-                    onDelete = { transactions.remove(transaction) }
+                    onDelete = { transactions.remove(transaction) },
+                    onEdit = {
+                        editingTransaction = transaction
+                        editCategoryInput = transaction.category
+                        editAmountInput = transaction.amount.replace(Regex("[^\\d]"), "")
+                        if (editAmountInput.isNotEmpty()) {
+                            val parsed = editAmountInput.toLongOrNull() ?: 0L
+                            val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+                            editAmountInput = formatter.format(parsed)
+                        }
+                        showEditDialog = true
+                    }
                 )
             }
             
@@ -252,6 +355,25 @@ fun HomeScreen(onNavigateToSummary: () -> Unit) {
                 Icon(Icons.Default.BarChart, contentDescription = null)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text("Resumen Finanzas", fontWeight = FontWeight.Bold)
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Botón para Ahorro Mensual
+            Button(
+                onClick = onNavigateToSavings,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF1E1E1E),
+                    contentColor = Color.White
+                )
+            ) {
+                Icon(Icons.Default.MonetizationOn, contentDescription = null)
+                Spacer(modifier = Modifier.width(8.dp))
+                Text("Ahorro Mensual", fontWeight = FontWeight.Bold)
             }
             
             Spacer(modifier = Modifier.height(120.dp))
@@ -342,7 +464,7 @@ fun SummaryCard(
 }
 
 @Composable
-fun TransactionItem(transaction: Transaction, onDelete: () -> Unit) {
+fun TransactionItem(transaction: Transaction, onDelete: () -> Unit, onEdit: () -> Unit) {
     var isDone by remember { mutableStateOf(transaction.isDone) }
     
     val backgroundColor by animateColorAsState(
@@ -385,6 +507,19 @@ fun TransactionItem(transaction: Transaction, onDelete: () -> Unit) {
             }
 
             Row(verticalAlignment = Alignment.CenterVertically) {
+                // Botón Editar
+                IconButton(
+                    onClick = onEdit,
+                    modifier = Modifier.size(36.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Edit,
+                        contentDescription = "Editar",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+
                 IconButton(
                     onClick = onDelete,
                     modifier = Modifier.size(36.dp)
@@ -495,6 +630,6 @@ fun BottomNavItem(
 @Composable
 fun HomeScreenPreview() {
     NchTheme(darkTheme = true) {
-        HomeScreen(onNavigateToSummary = {})
+        HomeScreen(onNavigateToSummary = {}, onNavigateToSavings = {})
     }
 }
