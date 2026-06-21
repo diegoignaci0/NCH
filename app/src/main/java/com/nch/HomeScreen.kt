@@ -51,7 +51,7 @@ fun formatCLP(amount: String): String {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen() {
+fun HomeScreen(onNavigateToSummary: () -> Unit) {
     // Estado para la lista de transacciones
     val transactions = remember {
         mutableStateListOf<Transaction>()
@@ -202,27 +202,8 @@ fun HomeScreen() {
             SummaryCard(
                 title = "meta 2026",
                 amount = "$100.000",
+                savingsAmount = "$60.000",
                 containerColor = Color(0xFF1E1E1E)
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Card Ingresos (Verde)
-            SummaryCard(
-                title = "ingresos extras de sueldo",
-                amount = "$0",
-                containerColor = Color(0xFF1B5E20), // Verde oscuro
-                isSmall = true
-            )
-            
-            Spacer(modifier = Modifier.height(12.dp))
-            
-            // Card Gastos Extras (Rojo)
-            SummaryCard(
-                title = "gastos extras",
-                amount = "$0",
-                containerColor = Color(0xFFB71C1C), // Rojo oscuro
-                isSmall = true
             )
             
             Spacer(modifier = Modifier.height(32.dp))
@@ -258,9 +239,7 @@ fun HomeScreen() {
             
             // Botón para Resumen Finanzas
             Button(
-                onClick = { 
-                    /* TODO: Navegación a Resumen Finanzas */ 
-                },
+                onClick = onNavigateToSummary,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -285,7 +264,8 @@ fun SummaryCard(
     title: String,
     amount: String,
     containerColor: Color,
-    isSmall: Boolean = false
+    isSmall: Boolean = false,
+    savingsAmount: String? = null
 ) {
     Card(
         modifier = Modifier
@@ -330,6 +310,15 @@ fun SummaryCard(
                 fontSize = if (isSmall) 28.sp else 42.sp,
                 fontWeight = FontWeight.Bold
             )
+
+            if (savingsAmount != null) {
+                Text(
+                    text = "Ahorrado: $savingsAmount",
+                    color = Color.White.copy(alpha = 0.6f),
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+            }
             
             if (!isSmall) {
                 Spacer(modifier = Modifier.height(16.dp))
@@ -506,6 +495,6 @@ fun BottomNavItem(
 @Composable
 fun HomeScreenPreview() {
     NchTheme(darkTheme = true) {
-        HomeScreen()
+        HomeScreen(onNavigateToSummary = {})
     }
 }
