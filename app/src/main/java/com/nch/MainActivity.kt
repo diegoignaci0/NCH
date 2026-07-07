@@ -6,6 +6,8 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.*
 import com.nch.ui.theme.NchTheme
+import java.text.NumberFormat
+import java.util.Locale
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -22,13 +24,51 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MainApp() {
     var currentScreen by remember { mutableStateOf("home") }
+    
+    // Estado compartido de ahorros
+    var savingsGoal by remember { mutableLongStateOf(0L) }
+    val savingsList = remember { mutableStateListOf<Transaction>() }
+    
+    // Cálculo de ahorro actual
+    val currentSavingsValue = remember {
+        derivedStateOf {
+            savingsList.filter { it.isDone }.sumOf { 
+                it.amount.replace(Regex("\\D"), "").toLongOrNull() ?: 0L
+            }
+        }
+    }
+
+    val progress = remember {
+        derivedStateOf {
+            if (savingsGoal > 0) currentSavingsValue.value.toFloat() / savingsGoal else 0f
+        }
+    }
+
+    val formattedGoal = remember(savingsGoal) {
+        val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+        "$${formatter.format(savingsGoal)}"
+    }
+
+    val formattedCurrent = remember(currentSavingsValue.value) {
+        val formatter = NumberFormat.getInstance(Locale("es", "CL"))
+        "$${formatter.format(currentSavingsValue.value)}"
+    }
 
     when (currentScreen) {
         "home" -> HomeScreen(
-            onNavigateToSummary = { currentScreen = "summary" },
-            onNavigateToSavings = { currentScreen = "savings" }
+            onNavigateToSavings = { currentScreen = "savings" },
+            savingsGoal = formattedGoal,
+            currentSavings = formattedCurrent,
+            progress = progress.value,
+            onEditGoal = { newGoal: Long -> savingsGoal = newGoal }
         )
-        "summary" -> FinanceSummaryScreen(onBack = { currentScreen = "home" })
-        "savings" -> MonthlySavingsScreen(onBack = { currentScreen = "home" })
+        "savings" -> MonthlySavingsScreen(
+            onBack = { currentScreen = "home" },
+            savingsList = savingsList,
+            savingsGoal = formattedGoal,
+            currentSavings = formattedCurrent,
+            progress = progress.value,
+            onEditGoal = { newGoal: Long -> savingsGoal = newGoal }
+        )
     }
 }
