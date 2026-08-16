@@ -17,6 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.ui.draw.clip
+import coil3.compose.AsyncImage
 import java.text.NumberFormat
 import java.util.Locale
 
@@ -180,6 +183,18 @@ fun MonthlySavingsScreen(
             CenterAlignedTopAppBar(
                 title = { Text("AHORRO MENSUAL", fontWeight = FontWeight.Black, color = Color.White, fontSize = 18.sp, letterSpacing = 1.sp) },
                 navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, "Volver", tint = Color.White) } },
+                actions = {
+                    IconButton(onClick = {}) {
+                        AsyncImage(
+                            model = "https://avatars.githubusercontent.com/u/144415849?v=4",
+                            contentDescription = "Profile",
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF222222))
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
             )
         },
@@ -223,7 +238,12 @@ fun MonthlySavingsScreen(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { showAddDialog = true }, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E))) {
+            Button(
+                onClick = { showAddDialog = true },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
+            ) {
                 Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Ahorro", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(120.dp))

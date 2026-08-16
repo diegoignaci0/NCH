@@ -17,6 +17,7 @@ import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
+import androidx.compose.material.icons.filled.ShoppingCart
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -29,6 +30,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
 import com.nch.ui.theme.NchTheme
 import java.text.NumberFormat
 import java.util.Locale
@@ -45,6 +47,7 @@ data class Transaction(
 @Composable
 fun HomeScreen(
     onNavigateToSavings: () -> Unit,
+    onNavigateToPurchases: () -> Unit,
     savingsGoal: String,
     currentSavings: String,
     progress: Float,
@@ -205,7 +208,18 @@ fun HomeScreen(
             CenterAlignedTopAppBar(
                 title = { Text("NCH", fontWeight = FontWeight.Black, color = Color.White, fontSize = 20.sp, letterSpacing = 2.sp) },
                 navigationIcon = { IconButton(onClick = {}) { Icon(Icons.Default.Menu, "Menu", tint = Color.White) } },
-                actions = { IconButton(onClick = {}) { Box(Modifier.size(36.dp).clip(CircleShape).background(Color(0xFF222222))) } },
+                actions = {
+                    IconButton(onClick = {}) {
+                        AsyncImage(
+                            model = "https://avatars.githubusercontent.com/u/144415849?v=4",
+                            contentDescription = "Profile",
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(CircleShape)
+                                .background(Color(0xFF222222))
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Black)
             )
         },
@@ -250,12 +264,31 @@ fun HomeScreen(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = { showDialog = true }, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E))) {
+                Button(
+                onClick = { showDialog = true },
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
+            ) {
                 Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Gasto", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(12.dp))
-            Button(onClick = onNavigateToSavings, modifier = Modifier.fillMaxWidth().height(56.dp), shape = RoundedCornerShape(16.dp), colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E))) {
+            Button(
+                onClick = onNavigateToSavings,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
+            ) {
                 Icon(Icons.Default.MonetizationOn, null); Spacer(Modifier.width(8.dp)); Text("Ahorro Mensual", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onNavigateToPurchases,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
+            ) {
+                Icon(Icons.Default.ShoppingCart, null); Spacer(Modifier.width(8.dp)); Text("Compras", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(120.dp))
         }
@@ -358,6 +391,6 @@ fun BottomNavItem(icon: ImageVector, label: String, isSelected: Boolean, onClick
 @Composable
 fun HomeScreenPreview() {
     NchTheme(darkTheme = true) {
-        HomeScreen({}, "$0", "$0", 0f, {})
+        HomeScreen({}, {}, "$0", "$0", 0f, {})
     }
 }
