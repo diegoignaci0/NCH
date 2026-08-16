@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.FitnessCenter
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.MonetizationOn
 import androidx.compose.material.icons.filled.ShoppingCart
+import androidx.compose.material.icons.filled.CreditCard
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -40,7 +41,10 @@ data class Transaction(
     val id: String = UUID.randomUUID().toString(),
     val category: String,
     val amount: String,
-    val isDone: Boolean = false
+    val isDone: Boolean = false,
+    val installmentAmount: String? = null,
+    val totalAmount: String? = null,
+    val installmentsCount: String? = null
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -48,6 +52,7 @@ data class Transaction(
 fun HomeScreen(
     onNavigateToSavings: () -> Unit,
     onNavigateToPurchases: () -> Unit,
+    onNavigateToDebts: () -> Unit,
     savingsGoal: String,
     currentSavings: String,
     progress: Float,
@@ -270,7 +275,7 @@ fun HomeScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
             ) {
-                Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Gasto", fontWeight = FontWeight.Bold)
+                Icon(Icons.Default.Add, null); Spacer(Modifier.width(8.dp)); Text("Añadir Pago", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(12.dp))
             Button(
@@ -289,6 +294,15 @@ fun HomeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
             ) {
                 Icon(Icons.Default.ShoppingCart, null); Spacer(Modifier.width(8.dp)); Text("Compras", fontWeight = FontWeight.Bold)
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+            Button(
+                onClick = onNavigateToDebts,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF1E1E1E), contentColor = Color.White)
+            ) {
+                Icon(Icons.Default.CreditCard, null); Spacer(Modifier.width(8.dp)); Text("Seccion de deudas", fontWeight = FontWeight.Bold)
             }
             Spacer(modifier = Modifier.height(120.dp))
         }
@@ -350,7 +364,31 @@ fun TransactionItem(transaction: Transaction, onDelete: () -> Unit, onEdit: () -
         Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(transaction.category, color = Color.White, fontSize = 16.sp, fontWeight = FontWeight.Medium)
-                Text(transaction.amount, color = Color.White, fontSize = 14.sp)
+                if (transaction.installmentAmount != null && transaction.totalAmount != null) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text("Cuota: ${transaction.installmentAmount}", color = Color.White.copy(alpha = 0.7f), fontSize = 14.sp)
+                            Text("Total: ${transaction.totalAmount}", color = Color.White, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                        }
+                        if (transaction.installmentsCount != null) {
+                            Surface(
+                                color = Color.White.copy(alpha = 0.1f),
+                                shape = RoundedCornerShape(8.dp),
+                                modifier = Modifier.padding(horizontal = 8.dp)
+                            ) {
+                                Text(
+                                    text = transaction.installmentsCount,
+                                    color = Color.White,
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Black,
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
+                    }
+                } else {
+                    Text(transaction.amount, color = Color.White, fontSize = 14.sp)
+                }
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 IconButton(onClick = onEdit, Modifier.size(36.dp)) { Icon(Icons.Default.Edit, "Editar", tint = Color.Gray, modifier = Modifier.size(18.dp)) }
@@ -391,6 +429,6 @@ fun BottomNavItem(icon: ImageVector, label: String, isSelected: Boolean, onClick
 @Composable
 fun HomeScreenPreview() {
     NchTheme(darkTheme = true) {
-        HomeScreen({}, {}, "$0", "$0", 0f, {})
+        HomeScreen({}, {}, {}, "$0", "$0", 0f, {})
     }
 }
