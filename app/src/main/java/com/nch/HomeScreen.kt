@@ -264,7 +264,7 @@ fun HomeScreen(
             }
             
             Spacer(modifier = Modifier.height(16.dp))
-            Button(
+                Button(
                 onClick = { showDialog = true },
                 modifier = Modifier.fillMaxWidth().height(56.dp),
                 shape = RoundedCornerShape(16.dp),
